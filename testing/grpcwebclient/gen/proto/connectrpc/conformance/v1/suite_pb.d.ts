@@ -65,6 +65,9 @@ export class TestSuite extends jspb.Message {
   getReliesOnMessageReceiveLimit(): boolean;
   setReliesOnMessageReceiveLimit(value: boolean): TestSuite;
 
+  getReliesOnConnectQuery(): boolean;
+  setReliesOnConnectQuery(value: boolean): TestSuite;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TestSuite.AsObject;
   static toObject(includeInstance: boolean, msg: TestSuite): TestSuite.AsObject;
@@ -87,6 +90,7 @@ export namespace TestSuite {
     reliesOnTlsClientCerts: boolean,
     reliesOnConnectGet: boolean,
     reliesOnMessageReceiveLimit: boolean,
+    reliesOnConnectQuery: boolean,
   }
 
   export enum TestMode { 

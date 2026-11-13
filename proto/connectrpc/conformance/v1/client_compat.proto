@@ -149,6 +149,12 @@ message ClientCompatRequest {
   // provided and valid so that the reference client knows how it
   // should try to interpret the server's response.
   RawHTTPRequest raw_request = 20;
+  // If protocol indicates Connect and stream type indicates
+  // Unary, this instructs the client to use the HTTP QUERY method
+  // (RFC 10008) when making the request. The request is otherwise
+  // identical to a unary POST request. It is never set together with
+  // use_get_http_method.
+  bool use_query_http_method = 21;
 }
 
 // The outcome of one ClientCompatRequest.

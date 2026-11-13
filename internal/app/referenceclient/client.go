@@ -172,6 +172,12 @@ func invoke(ctx context.Context, transports *transports, req *conformancev1.Clie
 
 	// Create client options based on protocol of the implementation
 	clientOptions := []connecthttp.Option{connecthttp.WithHTTPGet()}
+	if req.UseQueryHttpMethod {
+		// QUERY replaces POST but not GET: if GET were also enabled, eligible
+		// requests would still be sent as GET. A request never asks for both
+		// methods, so for a QUERY request we enable QUERY instead of GET.
+		clientOptions = []connecthttp.Option{connecthttp.WithHTTPQuery()}
+	}
 	switch req.Protocol {
 	case conformancev1.Protocol_PROTOCOL_GRPC:
 		clientOptions = append(clientOptions, connecthttp.WithGRPC())

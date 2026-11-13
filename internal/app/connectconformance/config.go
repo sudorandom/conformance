@@ -37,6 +37,7 @@ type configCase struct {
 	UseTLS                 bool
 	UseTLSClientCerts      bool
 	UseConnectGET          bool
+	UseConnectQuery        bool
 	UseMessageReceiveLimit bool
 	ConnectVersionMode     conformancev1.TestSuite_ConnectVersionMode
 }
@@ -56,6 +57,7 @@ type supportedFeatures struct {
 	SupportsTrailers                bool
 	SupportsHalfDuplexBidiOverHTTP1 bool
 	SupportsConnectGet              bool
+	SupportsConnectQuery            bool
 	SupportsMessageReceiveLimit     bool
 }
 
@@ -124,6 +126,7 @@ func resolveFeatures(features *conformancev1.Features) (supportedFeatures, error
 		SupportsTrailers:                features.GetSupportsTrailers(),
 		SupportsHalfDuplexBidiOverHTTP1: features.GetSupportsHalfDuplexBidiOverHttp1(),
 		SupportsConnectGet:              features.GetSupportsConnectGet(),
+		SupportsConnectQuery:            features.GetSupportsConnectQuery(),
 		SupportsMessageReceiveLimit:     features.GetSupportsMessageReceiveLimit(),
 	}
 
@@ -140,6 +143,9 @@ func resolveFeatures(features *conformancev1.Features) (supportedFeatures, error
 	if features.SupportsConnectGet == nil {
 		result.SupportsConnectGet = true
 	}
+	// Unlike the flags above, SupportsConnectQuery is false when not provided.
+	// That keeps implementations that have not adopted HTTP QUERY passing when
+	// they upgrade to a version of the suite that includes it.
 	if features.SupportsMessageReceiveLimit == nil {
 		result.SupportsMessageReceiveLimit = true
 	}
@@ -303,9 +309,17 @@ func computeCasesFromFeatures(features supportedFeatures, tlsCases, tlsClientCer
 						continue // gRPC requires HTTP/2
 					}
 
-					connectGetCases := []bool{false}
-					if protocol == conformancev1.Protocol_PROTOCOL_CONNECT && features.SupportsConnectGet {
-						connectGetCases = []bool{false, true}
+					// Each pair is (use GET, use QUERY). A request never uses both
+					// methods, so there is no case where both are true.
+					type connectMethodCase struct{ get, query bool }
+					connectMethodCases := []connectMethodCase{{}}
+					if protocol == conformancev1.Protocol_PROTOCOL_CONNECT {
+						if features.SupportsConnectGet {
+							connectMethodCases = append(connectMethodCases, connectMethodCase{get: true})
+						}
+						if features.SupportsConnectQuery {
+							connectMethodCases = append(connectMethodCases, connectMethodCase{query: true})
+						}
 					}
 
 					for _, streamType := range features.StreamTypes {
@@ -327,7 +341,7 @@ func computeCasesFromFeatures(features supportedFeatures, tlsCases, tlsClientCer
 								continue
 							}
 							for _, compression := range features.Compressions {
-								for _, connectGetCase := range connectGetCases {
+								for _, connectMethodCase := range connectMethodCases {
 									for _, msgRecvLimitCase := range msgRecvLimitCases {
 										cases[configCase{
 											Version:                version,
@@ -337,7 +351,8 @@ func computeCasesFromFeatures(features supportedFeatures, tlsCases, tlsClientCer
 											StreamType:             streamType,
 											UseTLS:                 tlsCase,
 											UseTLSClientCerts:      tlsClientCertCase,
-											UseConnectGET:          connectGetCase,
+											UseConnectGET:          connectMethodCase.get,
+											UseConnectQuery:        connectMethodCase.query,
 											UseMessageReceiveLimit: msgRecvLimitCase,
 										}] = struct{}{}
 									}

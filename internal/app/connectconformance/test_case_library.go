@@ -127,6 +127,12 @@ func (lib *testCaseLibrary) expandSuite(suite *conformancev1.TestSuite, configCa
 	if suite.ReliesOnConnectGet && !only(suite.RelevantProtocols, conformancev1.Protocol_PROTOCOL_CONNECT) {
 		return fmt.Errorf("suite %q is misconfigured: it relies on Connect GET support, but has unexpected relevant protocols: %v", suite.Name, suite.RelevantProtocols)
 	}
+	if suite.ReliesOnConnectQuery && !only(suite.RelevantProtocols, conformancev1.Protocol_PROTOCOL_CONNECT) {
+		return fmt.Errorf("suite %q is misconfigured: it relies on Connect QUERY support, but has unexpected relevant protocols: %v", suite.Name, suite.RelevantProtocols)
+	}
+	if suite.ReliesOnConnectQuery && suite.ReliesOnConnectGet {
+		return fmt.Errorf("suite %q is misconfigured: it relies on both Connect GET and Connect QUERY, but a request uses only one of them", suite.Name)
+	}
 	if suite.ConnectVersionMode == conformancev1.TestSuite_CONNECT_VERSION_MODE_IGNORE && !only(suite.RelevantProtocols, conformancev1.Protocol_PROTOCOL_CONNECT) {
 		return fmt.Errorf("suite %q is misconfigured: it ignores Connect Version headers, but has unexpected relevant protocols: %v", suite.Name, suite.RelevantProtocols)
 	}
@@ -168,6 +174,7 @@ func (lib *testCaseLibrary) expandSuite(suite *conformancev1.TestSuite, configCa
 								UseTLS:                 tlsCase,
 								UseTLSClientCerts:      suite.ReliesOnTlsClientCerts,
 								UseConnectGET:          suite.ReliesOnConnectGet,
+								UseConnectQuery:        suite.ReliesOnConnectQuery,
 								ConnectVersionMode:     suite.ConnectVersionMode,
 								UseMessageReceiveLimit: suite.ReliesOnMessageReceiveLimit,
 							}
@@ -196,6 +203,12 @@ func (lib *testCaseLibrary) expandCases(cfgCase configCase, namePrefix []string,
 		}
 		if testCase.Request.StreamType != cfgCase.StreamType {
 			continue
+		}
+		if testCase.Request.UseGetHttpMethod && testCase.Request.UseQueryHttpMethod {
+			return fmt.Errorf("test case #%d: test %s uses both GET and QUERY but a request uses only one method", i+1, testCase.Request.TestName)
+		}
+		if testCase.Request.UseQueryHttpMethod && !cfgCase.UseConnectQuery {
+			return fmt.Errorf("test case #%d: test %s uses QUERY but its suite does not set relies_on_connect_query", i+1, testCase.Request.TestName)
 		}
 		if testCase.Request.GetService() == "" {
 			if testCase.Request.GetMethod() == "" {
@@ -657,6 +670,13 @@ func populateExpectedUnaryResponse(testCase *conformancev1.TestCase) error {
 				},
 			},
 		}
+	}
+
+	// If this is a QUERY test, the server must report the method it observed.
+	// Unlike GET, there are no extra Connect query params to expect: the request
+	// is a plain unary request apart from its method.
+	if testCase.Request.UseQueryHttpMethod {
+		reqInfo.HttpMethod = proto.String(internal.HTTPMethodQuery)
 	}
 
 	var def *conformancev1.UnaryResponseDefinition

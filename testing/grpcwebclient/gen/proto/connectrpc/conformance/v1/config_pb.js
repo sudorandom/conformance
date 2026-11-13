@@ -437,7 +437,8 @@ supportsTlsClientCerts: (f = jspb.Message.getBooleanField(msg, 8)) == null ? und
 supportsTrailers: (f = jspb.Message.getBooleanField(msg, 9)) == null ? undefined : f,
 supportsHalfDuplexBidiOverHttp1: (f = jspb.Message.getBooleanField(msg, 10)) == null ? undefined : f,
 supportsConnectGet: (f = jspb.Message.getBooleanField(msg, 11)) == null ? undefined : f,
-supportsMessageReceiveLimit: (f = jspb.Message.getBooleanField(msg, 12)) == null ? undefined : f
+supportsMessageReceiveLimit: (f = jspb.Message.getBooleanField(msg, 12)) == null ? undefined : f,
+supportsConnectQuery: (f = jspb.Message.getBooleanField(msg, 13)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -516,6 +517,10 @@ proto.connectrpc.conformance.v1.Features.deserializeBinaryFromReader = function(
     case 12:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setSupportsMessageReceiveLimit(value);
+      break;
+    case 13:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setSupportsConnectQuery(value);
       break;
     default:
       reader.skipField();
@@ -627,6 +632,13 @@ proto.connectrpc.conformance.v1.Features.serializeBinaryToWriter = function(mess
   if (f != null) {
     writer.writeBool(
       12,
+      f
+    );
+  }
+  f = /** @type {boolean} */ (jspb.Message.getField(message, 13));
+  if (f != null) {
+    writer.writeBool(
+      13,
       f
     );
   }
@@ -1067,6 +1079,42 @@ proto.connectrpc.conformance.v1.Features.prototype.clearSupportsMessageReceiveLi
  */
 proto.connectrpc.conformance.v1.Features.prototype.hasSupportsMessageReceiveLimit = function() {
   return jspb.Message.getField(this, 12) != null;
+};
+
+
+/**
+ * optional bool supports_connect_query = 13;
+ * @return {boolean}
+ */
+proto.connectrpc.conformance.v1.Features.prototype.getSupportsConnectQuery = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 13, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.connectrpc.conformance.v1.Features} returns this
+ */
+proto.connectrpc.conformance.v1.Features.prototype.setSupportsConnectQuery = function(value) {
+  return jspb.Message.setField(this, 13, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.connectrpc.conformance.v1.Features} returns this
+ */
+proto.connectrpc.conformance.v1.Features.prototype.clearSupportsConnectQuery = function() {
+  return jspb.Message.setField(this, 13, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.connectrpc.conformance.v1.Features.prototype.hasSupportsConnectQuery = function() {
+  return jspb.Message.getField(this, 13) != null;
 };
 
 

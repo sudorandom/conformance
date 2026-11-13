@@ -165,6 +165,48 @@ func TestResults_Assert(t *testing.T) {
 	require.Equal(t, "FAILED: known-to-fail/4 was expected to fail but did not\n", lines[5])
 }
 
+func TestResults_Assert_HTTPMethod(t *testing.T) {
+	t.Parallel()
+	payloadWithMethod := func(method *string) *conformancev1.ClientResponseResult {
+		return &conformancev1.ClientResponseResult{
+			Payloads: []*conformancev1.ConformancePayload{
+				{
+					Data:        []byte{1},
+					RequestInfo: &conformancev1.ConformancePayload_RequestInfo{HttpMethod: method},
+				},
+			},
+		}
+	}
+	testCase := &conformancev1.TestCase{
+		Request:          &conformancev1.ClientCompatRequest{TestName: "abc"},
+		ExpectedResponse: payloadWithMethod(new("QUERY")),
+	}
+	otherCase := &conformancev1.TestCase{
+		Request:          &conformancev1.ClientCompatRequest{TestName: "def"},
+		ExpectedResponse: payloadWithMethod(nil),
+	}
+
+	results := newResults(conformancev1.TestSuite_TEST_MODE_UNSPECIFIED, 0, makeKnownFailing(), makeKnownFlaky(), nil)
+	results.assert("matches", testCase, payloadWithMethod(new("QUERY")))
+	results.assert("wrong-method", testCase, payloadWithMethod(new("POST")))
+	results.assert("lowercase-method", testCase, payloadWithMethod(new("query")))
+	// A server that does not populate the field fails when QUERY is expected...
+	results.assert("not-reported", testCase, payloadWithMethod(nil))
+	// ...but the field is ignored when the test case does not expect it.
+	results.assert("not-expected", otherCase, payloadWithMethod(new("POST")))
+
+	logger := &internal.SimplePrinter{}
+	require.False(t, results.report(logger))
+	lines := errorMessages(logger.Messages)
+	require.Len(t, lines, 3)
+	require.Contains(t, lines[0], `FAILED: lowercase-method:`)
+	require.Contains(t, lines[0], `server reported HTTP method "query" but "QUERY" was expected`)
+	require.Contains(t, lines[1], `FAILED: not-reported:`)
+	require.Contains(t, lines[1], `server reported HTTP method "" but "QUERY" was expected`)
+	require.Contains(t, lines[2], `FAILED: wrong-method:`)
+	require.Contains(t, lines[2], `server reported HTTP method "POST" but "QUERY" was expected`)
+}
+
 func TestResults_Assert_ReportsAllErrors(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {

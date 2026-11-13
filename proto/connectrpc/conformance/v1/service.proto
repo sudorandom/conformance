@@ -316,6 +316,16 @@ message ConformancePayload {
     // server framework, at a minimum, at least expose to application code whether the
     // request used GET vs. POST.
     ConnectGetInfo connect_get_info = 4;
+    // The HTTP method the server observed for the request, such as "POST",
+    // "GET", or "QUERY". The value is the exact method token, so "QUERY" is
+    // uppercase.
+    //
+    // Servers that support the Connect protocol over the HTTP QUERY method
+    // must populate this field for every request. It is only checked for test
+    // cases that expect a QUERY request, so servers that do not yet populate
+    // it keep passing all other test cases. Unlike connect_get_info, it is not
+    // sufficient to merely include an empty message: the value is compared.
+    optional string http_method = 5;
   }
   message ConnectGetInfo {
     // The query params observed in the request URL.

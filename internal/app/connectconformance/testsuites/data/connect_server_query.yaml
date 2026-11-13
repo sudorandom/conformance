@@ -1,0 +1,192 @@
+name: Connect QUERY Server Requests
+# Raw requests that exercise how a server handles the HTTP QUERY method (RFC
+# 10008) for the Connect protocol. A procedure accepts QUERY if and only if it
+# is unary and declared NO_SIDE_EFFECTS. These cases cannot check the Allow
+# header of a 405 response: the test runner only checks that expected response
+# headers are present, not that a value is absent.
+mode: TEST_MODE_SERVER
+relevantProtocols:
+  - PROTOCOL_CONNECT
+relevantCompressions:
+  - COMPRESSION_IDENTITY
+relevantCodecs:
+  - CODEC_PROTO
+relies_on_connect_query: true
+testCases:
+  # A unary procedure that is not side-effect free does not accept QUERY.
+  - request:
+      testName: unary-with-side-effects
+      streamType: STREAM_TYPE_UNARY
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.UnaryRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/Unary
+        headers:
+          - name: content-type
+            value: [ "application/proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        unary:
+          binary_message: { "@type": "type.googleapis.com/connectrpc.conformance.v1.UnaryRequest" }
+    expectedResponse:
+      httpStatusCode: 405
+      error:
+        # unknown, mapped from 405 status code
+        code: CODE_UNKNOWN
+  # Streaming procedures never accept QUERY.
+  - request:
+      testName: server-stream
+      streamType: STREAM_TYPE_SERVER_STREAM
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.ServerStreamRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/ServerStream
+        headers:
+          - name: content-type
+            value: [ "application/connect+proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        stream:
+          items:
+            - flags: 0
+              payload:
+                binary_message:
+                  "@type": "type.googleapis.com/connectrpc.conformance.v1.ServerStreamRequest"
+    expectedResponse:
+      httpStatusCode: 405
+      error:
+        # unknown, mapped from 405 status code
+        code: CODE_UNKNOWN
+  - request:
+      testName: client-stream
+      streamType: STREAM_TYPE_CLIENT_STREAM
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.ClientStreamRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/ClientStream
+        headers:
+          - name: content-type
+            value: [ "application/connect+proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        stream:
+          items:
+            - flags: 0
+              payload:
+                binary_message:
+                  "@type": "type.googleapis.com/connectrpc.conformance.v1.ClientStreamRequest"
+    expectedResponse:
+      httpStatusCode: 405
+      error:
+        # unknown, mapped from 405 status code
+        code: CODE_UNKNOWN
+  # Content-Type is mandatory with QUERY. An unsupported one gets 415, as it
+  # does for POST.
+  - request:
+      testName: unsupported-content-type
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: content-type
+            value: [ "application/foo" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        unary:
+          binary_message: { "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest" }
+    expectedResponse:
+      httpStatusCode: 415
+      error:
+        # unknown, mapped from 415 status code
+        code: CODE_UNKNOWN
+  - request:
+      testName: missing-content-type
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: connect-protocol-version
+            value: [ "1" ]
+        unary:
+          binary_message: { "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest" }
+    expectedResponse:
+      httpStatusCode: 415
+      error:
+        # unknown, mapped from 415 status code
+        code: CODE_UNKNOWN
+  - request:
+      testName: streaming-content-type
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: content-type
+            value: [ "application/connect+proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        unary:
+          binary_message: { "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest" }
+    expectedResponse:
+      httpStatusCode: 415
+      error:
+        # unknown, mapped from 415 status code
+        code: CODE_UNKNOWN
+  # The URI query is ignored, as it is for POST. In particular the GET query
+  # parameters have no meaning here: the message is the request content.
+  - request:
+      testName: uri-query-ignored
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      useQueryHttpMethod: true
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+          responseDefinition:
+            responseData: "dGVzdCByZXNwb25zZQ=="
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: content-type
+            value: [ "application/proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+        rawQueryParams:
+          - name: encoding
+            value: [ "json" ]
+          - name: message
+            value: [ "e30" ]
+          - name: base64
+            value: [ "1" ]
+        unary:
+          binary_message:
+            "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest"
+            responseDefinition:
+              responseData: "dGVzdCByZXNwb25zZQ=="
+    expectedResponse:
+      payloads:
+        - data: "dGVzdCByZXNwb25zZQ=="
+          requestInfo:
+            httpMethod: QUERY
+            requests:
+              - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+                responseDefinition:
+                  responseData: "dGVzdCByZXNwb25zZQ=="

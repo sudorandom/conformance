@@ -189,8 +189,11 @@ func runTestCasesForServer(
 		if isReferenceServer {
 			// The reference server wants more metadata in headers, to perform add'l validations.
 			httpMethod := http.MethodPost
-			if req.UseGetHttpMethod {
+			switch {
+			case req.UseGetHttpMethod:
 				httpMethod = http.MethodGet
+			case req.UseQueryHttpMethod:
+				httpMethod = internal.HTTPMethodQuery
 			}
 			extraHeaders := []*conformancev1.Header{
 				{Name: "x-expect-http-version", Value: []string{strconv.Itoa(int(req.HttpVersion))}},

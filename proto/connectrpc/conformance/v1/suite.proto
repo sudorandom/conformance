@@ -88,6 +88,9 @@ message TestSuite {
   // size of received messages. When true, mode should be set to indicate
   // whether it is the client or the server that must support the limit.
   bool relies_on_message_receive_limit = 12;
+  // If true, the cases in this suite rely on the Connect protocol over the
+  // HTTP QUERY method.
+  bool relies_on_connect_query = 13;
 }
 
 message TestCase {

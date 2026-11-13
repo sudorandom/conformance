@@ -94,6 +94,16 @@ There are two other kinds of fields in the request:
      when correctly configured. This field can be ignored when the `protocol` is not Connect.
      If the client implementation does not support "GET", it should be correctly configured
      in the config YAML, and this field can be ignored.
+   * `use_query_http_method`: If true, the client should use the "QUERY" HTTP method (RFC 10008)
+     when sending the request. The request is the same as the unary POST request the client would
+     otherwise send (same path, `Content-Type`, headers, and message in the request body), with only
+     the method changed. None of the GET query parameters are used. This is never set together with
+     `use_get_http_method`. It only applies to unary RPCs that are side-effect-free, when the `protocol`
+     is Connect, and can otherwise be ignored. The test runner verifies the method that the server
+     observes, so a client that sends POST or GET instead fails. The client must not fall back to
+     another method if the server rejects the request. If the client implementation does not
+     support "QUERY", it should not set `supports_connect_query` in the config YAML (that is the
+     default), and this field is then never set.
    * `request_headers`: Request header metadata to send with the RPC.
    * `request_messages`: Request message data to send as part of the RPC request.
    * `timeout_ms`: A timeout for the RPC, which is used to set a deadline.

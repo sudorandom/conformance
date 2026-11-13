@@ -233,7 +233,8 @@ requestMessagesList: jspb.Message.toObjectList(msg.getRequestMessagesList(),
 timeoutMs: (f = jspb.Message.getField(msg, 17)) == null ? undefined : f,
 requestDelayMs: jspb.Message.getFieldWithDefault(msg, 18, 0),
 cancel: (f = msg.getCancel()) && proto.connectrpc.conformance.v1.ClientCompatRequest.Cancel.toObject(includeInstance, f),
-rawRequest: (f = msg.getRawRequest()) && connectrpc_conformance_v1_service_pb.RawHTTPRequest.toObject(includeInstance, f)
+rawRequest: (f = msg.getRawRequest()) && connectrpc_conformance_v1_service_pb.RawHTTPRequest.toObject(includeInstance, f),
+useQueryHttpMethod: jspb.Message.getBooleanFieldWithDefault(msg, 21, false)
   };
 
   if (includeInstance) {
@@ -354,6 +355,10 @@ proto.connectrpc.conformance.v1.ClientCompatRequest.deserializeBinaryFromReader 
       var value = new connectrpc_conformance_v1_service_pb.RawHTTPRequest;
       reader.readMessage(value,connectrpc_conformance_v1_service_pb.RawHTTPRequest.deserializeBinaryFromReader);
       msg.setRawRequest(value);
+      break;
+    case 21:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setUseQueryHttpMethod(value);
       break;
     default:
       reader.skipField();
@@ -527,6 +532,13 @@ proto.connectrpc.conformance.v1.ClientCompatRequest.serializeBinaryToWriter = fu
       20,
       f,
       connectrpc_conformance_v1_service_pb.RawHTTPRequest.serializeBinaryToWriter
+    );
+  }
+  f = message.getUseQueryHttpMethod();
+  if (f) {
+    writer.writeBool(
+      21,
+      f
     );
   }
 };
@@ -1338,6 +1350,24 @@ proto.connectrpc.conformance.v1.ClientCompatRequest.prototype.clearRawRequest = 
  */
 proto.connectrpc.conformance.v1.ClientCompatRequest.prototype.hasRawRequest = function() {
   return jspb.Message.getField(this, 20) != null;
+};
+
+
+/**
+ * optional bool use_query_http_method = 21;
+ * @return {boolean}
+ */
+proto.connectrpc.conformance.v1.ClientCompatRequest.prototype.getUseQueryHttpMethod = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 21, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.connectrpc.conformance.v1.ClientCompatRequest} returns this
+ */
+proto.connectrpc.conformance.v1.ClientCompatRequest.prototype.setUseQueryHttpMethod = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 21, value);
 };
 
 

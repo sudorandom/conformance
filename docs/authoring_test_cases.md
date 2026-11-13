@@ -55,6 +55,11 @@ configured when running tests:
 
 * `reliesOnConnectGet` specifies that the suite relies on the Connect GET protocol. Defaults to `false`.
 
+* `reliesOnConnectQuery` specifies that the suite relies on the Connect protocol over the HTTP QUERY method
+  (RFC 10008). The suite is only run for implementations that configure `supports_connect_query`. A suite cannot rely
+  on both GET and QUERY, since a request uses only one of them. Test cases in such a suite set `useQueryHttpMethod`
+  instead of `useGetHttpMethod`. Defaults to `false`.
+
 * `reliesOnMessageReceiveLimit` specifies that the suite relies on support for limiting the size of received messages.
   When `true`, the `mode` property must be set to indicate whether the client or server should support the limit. Defaults
   to `false`.
@@ -179,6 +184,7 @@ The file names should use `lower_snake_case` convention.
 
 For example:
 * `connect_with_get.yaml` contains tests that test GET requests for the Connect protocol only.
+* `connect_with_query.yaml` contains tests that test QUERY requests for the Connect protocol only.
 * `grpc_web_client.yaml` contains client tests for the gRPC-web protocol. 
 * `client_message_size.yaml` file contains a suite of client tests only across all protocols.
 

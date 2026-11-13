@@ -1,0 +1,77 @@
+# When present, a Connect timeout must be 1 to 10 ASCII decimal digits. This
+# applies to QUERY requests too, where the timeout is still sent as a header.
+# Servers must reject any other value; the spec doesn't define the error or
+# HTTP status.
+name: Connect QUERY Timeout Format Requests
+mode: TEST_MODE_SERVER
+relevantProtocols:
+  - PROTOCOL_CONNECT
+relevantCompressions:
+  - COMPRESSION_IDENTITY
+relevantCodecs:
+  - CODEC_PROTO
+relies_on_connect_query: true
+testCases:
+  - request:
+      testName: ten-digits
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      useQueryHttpMethod: true
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+          responseDefinition:
+            responseData: "dGVzdCByZXNwb25zZQ=="
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: content-type
+            value: [ "application/proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+          - name: connect-timeout-ms
+            value: [ "9999999999" ]
+        unary:
+          binary_message:
+            "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest"
+            responseDefinition:
+              responseData: "dGVzdCByZXNwb25zZQ=="
+    expectedResponse:
+      payloads:
+        - data: "dGVzdCByZXNwb25zZQ=="
+          requestInfo:
+            httpMethod: QUERY
+            timeoutMs: 9999999999
+            requests:
+              - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+                responseDefinition:
+                  responseData: "dGVzdCByZXNwb25zZQ=="
+  - request:
+      testName: eleven-digits
+      service: connectrpc.conformance.v1.ConformanceService
+      method: IdempotentUnary
+      streamType: STREAM_TYPE_UNARY
+      useQueryHttpMethod: true
+      requestMessages:
+        - "@type": type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest
+          responseDefinition:
+            responseData: "dGVzdCByZXNwb25zZQ=="
+      rawRequest:
+        verb: QUERY
+        uri: /connectrpc.conformance.v1.ConformanceService/IdempotentUnary
+        headers:
+          - name: content-type
+            value: [ "application/proto" ]
+          - name: connect-protocol-version
+            value: [ "1" ]
+          - name: connect-timeout-ms
+            value: [ "00000005000" ]
+        unary:
+          binary_message:
+            "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest"
+            responseDefinition:
+              responseData: "dGVzdCByZXNwb25zZQ=="
+    expectedResponse:
+      error:
+        code: CODE_INVALID_ARGUMENT

@@ -251,6 +251,7 @@ func createServer(ctx context.Context, req *conformancev1.ServerCompatRequest, l
 			http.MethodHead,
 			http.MethodGet,
 			http.MethodPost,
+			internal.HTTPMethodQuery,
 			http.MethodPut,
 			http.MethodPatch,
 			http.MethodDelete,

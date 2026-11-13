@@ -454,12 +454,18 @@ func createRequestInfo(
 		timeoutMs = new(timeout.Milliseconds())
 	}
 
+	var httpMethod *string
+	if info, ok := connecthttp.ServerInfoForContext(ctx); ok && info.HTTPMethod() != "" {
+		httpMethod = new(info.HTTPMethod())
+	}
+
 	// Set all observed request headers and requests in the response payload
 	return &conformancev1.ConformancePayload_RequestInfo{
 		RequestHeaders: headerInfo,
 		Requests:       reqs,
 		TimeoutMs:      timeoutMs,
 		ConnectGetInfo: connectGetInfo,
+		HttpMethod:     httpMethod,
 	}
 }
 

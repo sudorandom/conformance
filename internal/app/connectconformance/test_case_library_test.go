@@ -21,6 +21,7 @@ import (
 	"testing"
 	"unicode"
 
+	"buf.build/go/protoyaml"
 	"connectrpc.com/conformance/internal/app/connectconformance/testsuites"
 	conformancev1 "connectrpc.com/conformance/internal/gen/proto/go/connectrpc/conformance/v1"
 	"github.com/google/go-cmp/cmp"
@@ -1240,6 +1241,30 @@ func TestPopulateExpectedResponse(t *testing.T) {
 			},
 		},
 		{
+			testName: "idempotent unary with query method",
+			request: &conformancev1.ClientCompatRequest{
+				StreamType:         conformancev1.StreamType_STREAM_TYPE_UNARY,
+				RequestMessages:    asAnySlice(t, unarySuccessReq),
+				RequestHeaders:     requestHeaders,
+				UseQueryHttpMethod: true,
+			},
+			expected: &conformancev1.ClientResponseResult{
+				ResponseHeaders: responseHeaders,
+				Payloads: []*conformancev1.ConformancePayload{
+					{
+						Data: data1,
+						RequestInfo: &conformancev1.ConformancePayload_RequestInfo{
+							RequestHeaders: requestHeaders,
+							Requests:       asAnySlice(t, unarySuccessReq),
+							// No Connect GET info: a QUERY request uses none of the GET query params.
+							HttpMethod: new("QUERY"),
+						},
+					},
+				},
+				ResponseTrailers: responseTrailers,
+			},
+		},
+		{
 			testName: "client stream success",
 			request: &conformancev1.ClientCompatRequest{
 				StreamType: conformancev1.StreamType_STREAM_TYPE_CLIENT_STREAM,
@@ -1971,4 +1996,75 @@ func asAnySlice(t *testing.T, msgs ...proto.Message) []*anypb.Any {
 		arr = append(arr, asAny)
 	}
 	return arr
+}
+
+func TestNewTestCaseLibrary_ConnectQuery(t *testing.T) {
+	t.Parallel()
+	queryCase := `
+testCases:
+- request:
+    testName: query-unary
+    service: connectrpc.conformance.v1.ConformanceService
+    method: IdempotentUnary
+    streamType: STREAM_TYPE_UNARY
+    useQueryHttpMethod: true`
+	loadSuite := func(t *testing.T, suiteYAML string) map[string]*conformancev1.TestSuite {
+		t.Helper()
+		var suite conformancev1.TestSuite
+		require.NoError(t, protoyaml.Unmarshal([]byte(suiteYAML), &suite))
+		return map[string]*conformancev1.TestSuite{"suite.yaml": &suite}
+	}
+	connectConfig := func(useGET, useQuery bool) []configCase {
+		return []configCase{{
+			Version:         conformancev1.HTTPVersion_HTTP_VERSION_2,
+			Protocol:        conformancev1.Protocol_PROTOCOL_CONNECT,
+			Codec:           conformancev1.Codec_CODEC_PROTO,
+			Compression:     conformancev1.Compression_COMPRESSION_IDENTITY,
+			StreamType:      conformancev1.StreamType_STREAM_TYPE_UNARY,
+			UseConnectGET:   useGET,
+			UseConnectQuery: useQuery,
+		}}
+	}
+
+	t.Run("runs only when the config case uses QUERY", func(t *testing.T) {
+		t.Parallel()
+		suites := loadSuite(t, "name: Query\nrelevantProtocols: [PROTOCOL_CONNECT]\nreliesOnConnectQuery: true"+queryCase)
+		lib, err := newTestCaseLibrary(suites, connectConfig(false, true), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.NoError(t, err)
+		require.Len(t, lib.testCases, 1)
+		for _, testCase := range lib.testCases {
+			require.Equal(t, "QUERY", testCase.ExpectedResponse.GetPayloads()[0].GetRequestInfo().GetHttpMethod())
+		}
+		// Without QUERY support there is nothing to run.
+		_, err = newTestCaseLibrary(suites, connectConfig(false, false), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "no test cases apply")
+		// GET support does not make QUERY cases apply.
+		_, err = newTestCaseLibrary(suites, connectConfig(true, false), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "no test cases apply")
+	})
+	t.Run("suite must be Connect only", func(t *testing.T) {
+		t.Parallel()
+		suites := loadSuite(t, "name: Query\nreliesOnConnectQuery: true"+queryCase)
+		_, err := newTestCaseLibrary(suites, connectConfig(false, true), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "relies on Connect QUERY support, but has unexpected relevant protocols")
+	})
+	t.Run("suite cannot rely on both GET and QUERY", func(t *testing.T) {
+		t.Parallel()
+		suites := loadSuite(t, "name: Query\nrelevantProtocols: [PROTOCOL_CONNECT]\nreliesOnConnectQuery: true\nreliesOnConnectGet: true"+queryCase)
+		_, err := newTestCaseLibrary(suites, connectConfig(false, true), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "relies on both Connect GET and Connect QUERY")
+	})
+	t.Run("test case cannot use both GET and QUERY", func(t *testing.T) {
+		t.Parallel()
+		suites := loadSuite(t, "name: Query\nrelevantProtocols: [PROTOCOL_CONNECT]\nreliesOnConnectQuery: true"+
+			queryCase+"\n    useGetHttpMethod: true")
+		_, err := newTestCaseLibrary(suites, connectConfig(false, true), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "uses both GET and QUERY")
+	})
+	t.Run("test case using QUERY needs the suite flag", func(t *testing.T) {
+		t.Parallel()
+		suites := loadSuite(t, "name: Query\nrelevantProtocols: [PROTOCOL_CONNECT]"+queryCase)
+		_, err := newTestCaseLibrary(suites, connectConfig(false, false), conformancev1.TestSuite_TEST_MODE_UNSPECIFIED)
+		require.ErrorContains(t, err, "does not set relies_on_connect_query")
+	})
 }

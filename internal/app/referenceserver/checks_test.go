@@ -25,6 +25,91 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestCheckConnectQueryRequest tests the check itself.
+func TestCheckConnectQueryRequest(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name          string
+		method        string
+		contentType   string
+		rawQuery      string
+		expectedError string
+	}{
+		{
+			name:        "non-QUERY request is ignored",
+			method:      http.MethodPost,
+			contentType: "",
+			rawQuery:    "message=foo",
+		},
+		{
+			name:        "GET request is ignored",
+			method:      http.MethodGet,
+			contentType: "",
+			rawQuery:    "encoding=proto&message=foo",
+		},
+		{
+			name:        "proto content type",
+			method:      internal.HTTPMethodQuery,
+			contentType: "application/proto",
+		},
+		{
+			name:        "json content type with charset and unrelated query param",
+			method:      internal.HTTPMethodQuery,
+			contentType: "application/json; charset=utf-8",
+			rawQuery:    "x-trace=abc",
+		},
+		{
+			name:          "missing content type",
+			method:        internal.HTTPMethodQuery,
+			expectedError: "content-type header is required",
+		},
+		{
+			name:          "streaming content type",
+			method:        internal.HTTPMethodQuery,
+			contentType:   "application/connect+proto",
+			expectedError: "not a unary Connect content type",
+		},
+		{
+			name:          "grpc content type",
+			method:        internal.HTTPMethodQuery,
+			contentType:   "application/grpc+proto",
+			expectedError: "not a unary Connect content type",
+		},
+		{
+			name:          "GET query parameter",
+			method:        internal.HTTPMethodQuery,
+			contentType:   "application/proto",
+			rawQuery:      "encoding=proto&message=AAAA",
+			expectedError: `query parameter "encoding" is only for GET`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			printer := &internal.SimplePrinter{}
+			feedback := &feedbackPrinter{p: printer, testCaseName: testCase.name}
+			req := &http.Request{
+				Method: testCase.method,
+				Header: http.Header{},
+				URL:    &url.URL{RawQuery: testCase.rawQuery},
+			}
+			if testCase.contentType != "" {
+				req.Header.Set("Content-Type", testCase.contentType)
+			}
+			checkConnectQueryRequest(req, feedback)
+			if testCase.expectedError == "" {
+				assert.Empty(t, printer.Messages)
+				return
+			}
+			if assert.NotEmpty(t, printer.Messages) {
+				assert.Contains(t, printer.Messages[0], testCase.expectedError)
+			}
+		})
+	}
+}
+
 // TestCheckConnectGetQueryParamOrder tests the check itself.
 func TestCheckConnectGetQueryParamOrder(t *testing.T) {
 	t.Parallel()

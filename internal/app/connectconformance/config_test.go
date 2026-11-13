@@ -712,3 +712,57 @@ func minus[T comparable](a, b []T) []T {
 	}
 	return results
 }
+
+func TestParseConfig_ConnectQueryPermutations(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name          string
+		config        string
+		expectQuery   bool
+		expectGetCase bool
+	}{
+		{
+			name:          "default does not include QUERY",
+			config:        "",
+			expectGetCase: true,
+		},
+		{
+			name:        "QUERY supported",
+			config:      "features:\n  supportsConnectQuery: true",
+			expectQuery: true, expectGetCase: true,
+		},
+		{
+			name:        "QUERY supported without GET",
+			config:      "features:\n  supportsConnectGet: false\n  supportsConnectQuery: true",
+			expectQuery: true,
+		},
+		{
+			name:   "QUERY explicitly unsupported",
+			config: "features:\n  supportsConnectQuery: false",
+			// GET is still on by default.
+			expectGetCase: true,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			cases, err := parseConfig("config.yaml", []byte(testCase.config))
+			require.NoError(t, err)
+			var sawQuery, sawGet, sawPlain bool
+			for _, cfgCase := range cases {
+				require.False(t, cfgCase.UseConnectGET && cfgCase.UseConnectQuery,
+					"a request never uses both GET and QUERY: %+v", cfgCase)
+				if cfgCase.UseConnectQuery {
+					require.Equal(t, conformancev1.Protocol_PROTOCOL_CONNECT, cfgCase.Protocol,
+						"QUERY is only for the Connect protocol: %+v", cfgCase)
+				}
+				sawQuery = sawQuery || cfgCase.UseConnectQuery
+				sawGet = sawGet || cfgCase.UseConnectGET
+				sawPlain = sawPlain || (!cfgCase.UseConnectGET && !cfgCase.UseConnectQuery)
+			}
+			require.Equal(t, testCase.expectQuery, sawQuery)
+			require.Equal(t, testCase.expectGetCase, sawGet)
+			require.True(t, sawPlain, "POST permutations must always remain")
+		})
+	}
+}

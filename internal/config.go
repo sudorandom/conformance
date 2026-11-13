@@ -27,4 +27,7 @@ const (
 	ConformanceServiceName = conformancev1connect.ConformanceServiceName
 	// DefaultAnyResolverPrefix is the prefix for type URLs used in Any messages.
 	DefaultAnyResolverPrefix = "type.googleapis.com/"
+	// HTTPMethodQuery is the HTTP QUERY method (RFC 10008). The standard
+	// library does not define a constant for it.
+	HTTPMethodQuery = "QUERY"
 )

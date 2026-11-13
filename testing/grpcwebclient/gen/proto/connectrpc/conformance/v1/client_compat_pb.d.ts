@@ -100,6 +100,9 @@ export class ClientCompatRequest extends jspb.Message {
   hasRawRequest(): boolean;
   clearRawRequest(): ClientCompatRequest;
 
+  getUseQueryHttpMethod(): boolean;
+  setUseQueryHttpMethod(value: boolean): ClientCompatRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ClientCompatRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ClientCompatRequest): ClientCompatRequest.AsObject;
@@ -130,6 +133,7 @@ export namespace ClientCompatRequest {
     requestDelayMs: number,
     cancel?: ClientCompatRequest.Cancel.AsObject,
     rawRequest?: connectrpc_conformance_v1_service_pb.RawHTTPRequest.AsObject,
+    useQueryHttpMethod: boolean,
   }
 
   export class Cancel extends jspb.Message {

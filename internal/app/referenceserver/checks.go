@@ -112,6 +112,7 @@ func referenceServerChecks(handler http.Handler, errPrinter internal.Printer) ht
 			checkProtocol(protocol, req, feedback)
 			if protocol == conformancev1.Protocol_PROTOCOL_CONNECT {
 				checkConnectGetQueryParamOrder(req, feedback)
+				checkConnectQueryRequest(req, feedback)
 			}
 			if timeout, ok := extractTimeout(req.Header, protocol, feedback); ok {
 				// In reference mode, we *remove* the timeout in this middleware so that the server
@@ -296,6 +297,39 @@ func checkCompression(expected conformancev1.Compression, req *http.Request, fee
 
 	if expect != actual {
 		feedback.Printf("expected compression %v; instead got %v", expect, actual)
+	}
+}
+
+// connectGetQueryParams are the URI query parameters that only Unary-Get
+// requests use.
+//
+//nolint:gochecknoglobals // canonical lookup table, not mutable state
+var connectGetQueryParams = []string{"connect", "base64", "compression", "encoding", "message"}
+
+// checkConnectQueryRequest verifies the parts of a Connect Unary-Query request
+// that differ from what the other checks cover. A Unary-Query request is a
+// unary POST request with the method changed to QUERY, so it must carry the
+// unary Content-Type that POST requires (RFC 10008 makes it mandatory) and none
+// of the Unary-Get query parameters. The codec and compression checks apply to
+// it unchanged, since it uses the same headers as POST.
+func checkConnectQueryRequest(req *http.Request, feedback *feedbackPrinter) {
+	if req.Method != internal.HTTPMethodQuery {
+		return
+	}
+	contentType := req.Header.Get("Content-Type")
+	switch {
+	case contentType == "":
+		feedback.Printf("content-type header is required with method QUERY")
+	case strings.HasPrefix(contentType, connectStreamContentTypePrefix) ||
+		contentType == grpcContentType || strings.HasPrefix(contentType, grpcContentTypePrefix) ||
+		contentType == grpcWebContentType || strings.HasPrefix(contentType, grpcWebContentTypePrefix):
+		feedback.Printf("content-type %q is not a unary Connect content type, which method QUERY requires", contentType)
+	}
+	query := req.URL.Query()
+	for _, name := range connectGetQueryParams {
+		if query.Has(name) {
+			feedback.Printf("query parameter %q is only for GET and should not appear with method QUERY", name)
+		}
 	}
 }
 

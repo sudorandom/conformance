@@ -80,6 +80,11 @@ message Features {
   // Whether a message receive limit is supported.
   // If absent, true is assumed.
   optional bool supports_message_receive_limit = 12;
+  // Whether Connect via the HTTP QUERY method is supported (RFC 10008).
+  // If absent, false is assumed. Unlike supports_connect_get, this defaults
+  // to false so that implementations that have not adopted QUERY keep passing
+  // when they upgrade to a version of the test suite that includes it.
+  optional bool supports_connect_query = 13;
 }
 
 // ConfigCase represents a single resolved configuration case. When tests are

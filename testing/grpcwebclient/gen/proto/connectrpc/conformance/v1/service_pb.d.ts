@@ -430,6 +430,11 @@ export namespace ConformancePayload {
     hasConnectGetInfo(): boolean;
     clearConnectGetInfo(): RequestInfo;
 
+    getHttpMethod(): string;
+    setHttpMethod(value: string): RequestInfo;
+    hasHttpMethod(): boolean;
+    clearHttpMethod(): RequestInfo;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RequestInfo.AsObject;
     static toObject(includeInstance: boolean, msg: RequestInfo): RequestInfo.AsObject;
@@ -444,11 +449,17 @@ export namespace ConformancePayload {
       timeoutMs?: number,
       requestsList: Array<google_protobuf_any_pb.Any.AsObject>,
       connectGetInfo?: ConformancePayload.ConnectGetInfo.AsObject,
+      httpMethod?: string,
     }
 
     export enum TimeoutMsCase { 
       _TIMEOUT_MS_NOT_SET = 0,
       TIMEOUT_MS = 2,
+    }
+
+    export enum HttpMethodCase { 
+      _HTTP_METHOD_NOT_SET = 0,
+      HTTP_METHOD = 5,
     }
   }
 

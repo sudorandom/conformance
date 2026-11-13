@@ -3630,7 +3630,8 @@ requestHeadersList: jspb.Message.toObjectList(msg.getRequestHeadersList(),
 timeoutMs: (f = jspb.Message.getField(msg, 2)) == null ? undefined : f,
 requestsList: jspb.Message.toObjectList(msg.getRequestsList(),
     google_protobuf_any_pb.Any.toObject, includeInstance),
-connectGetInfo: (f = msg.getConnectGetInfo()) && proto.connectrpc.conformance.v1.ConformancePayload.ConnectGetInfo.toObject(includeInstance, f)
+connectGetInfo: (f = msg.getConnectGetInfo()) && proto.connectrpc.conformance.v1.ConformancePayload.ConnectGetInfo.toObject(includeInstance, f),
+httpMethod: (f = jspb.Message.getField(msg, 5)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -3685,6 +3686,10 @@ proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.deserializeBinary
       var value = new proto.connectrpc.conformance.v1.ConformancePayload.ConnectGetInfo;
       reader.readMessage(value,proto.connectrpc.conformance.v1.ConformancePayload.ConnectGetInfo.deserializeBinaryFromReader);
       msg.setConnectGetInfo(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
+      msg.setHttpMethod(value);
       break;
     default:
       reader.skipField();
@@ -3744,6 +3749,13 @@ proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.serializeBinaryTo
       4,
       f,
       proto.connectrpc.conformance.v1.ConformancePayload.ConnectGetInfo.serializeBinaryToWriter
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 5));
+  if (f != null) {
+    writer.writeString(
+      5,
+      f
     );
   }
 };
@@ -3895,6 +3907,42 @@ proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.clearCo
  */
 proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.hasConnectGetInfo = function() {
   return jspb.Message.getField(this, 4) != null;
+};
+
+
+/**
+ * optional string http_method = 5;
+ * @return {string}
+ */
+proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.getHttpMethod = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo} returns this
+ */
+proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.setHttpMethod = function(value) {
+  return jspb.Message.setField(this, 5, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo} returns this
+ */
+proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.clearHttpMethod = function() {
+  return jspb.Message.setField(this, 5, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.connectrpc.conformance.v1.ConformancePayload.RequestInfo.prototype.hasHttpMethod = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

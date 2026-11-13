@@ -486,6 +486,15 @@ func checkRequestInfo(expected, actual *conformancev1.ConformancePayload_Request
 		} else if actual != nil && actual.TimeoutMs != nil {
 			errs = append(errs, fmt.Errorf("server echoed back a timeout (%d ms) but none was expected", actual.GetTimeoutMs()))
 		}
+		if expected.GetHttpMethod() != "" {
+			// The server must report the method it saw. This is only expected for
+			// QUERY test cases, so servers that do not populate it are unaffected
+			// elsewhere. If it is missing, the actual value is the empty string,
+			// which does not match.
+			if actual.GetHttpMethod() != expected.GetHttpMethod() {
+				errs = append(errs, fmt.Errorf("server reported HTTP method %q but %q was expected", actual.GetHttpMethod(), expected.GetHttpMethod()))
+			}
+		}
 		if len(expected.GetConnectGetInfo().GetQueryParams()) > 0 && len(actual.GetConnectGetInfo().GetQueryParams()) > 0 {
 			errs = append(errs, checkHeaders("request query params", expected.GetConnectGetInfo().GetQueryParams(), actual.GetConnectGetInfo().GetQueryParams())...)
 		}

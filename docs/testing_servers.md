@@ -101,6 +101,10 @@ The [`ConformancePayload`][conformancepayload] message is a field on most all re
      since the last sent response.
   * `connect_get_info` which is only applicable for GET operations such as [`IdempotentUnary`](#idempotentunary). It should contain any
      observed query parameters in the request URL.
+  * `http_method` which is the HTTP method the server observed for the request (for example `POST`, `GET`, or `QUERY`).
+     The value must be the exact method token, so `QUERY` is uppercase. Servers that support the Connect protocol over
+     the HTTP QUERY method must populate it for every request, since the test cases that send QUERY requests expect it to
+     be `QUERY`. It is not checked for any other test case.
 
  > [!NOTE]  
  > The response type for the [`Unimplemented`](#unimplemented) endpoint does not contain a conformance payload as
@@ -174,6 +178,13 @@ returned `ConformancePayload`. This RPC is the only one that sets the `connect_g
 
 Note that this endpoint is only applicable for Connect implementations that support `GET` requests. All others do not
 need to implement it.
+
+When the request arrives using the HTTP `QUERY` method instead (see `supports_connect_query` in the
+[configuration docs][config-docs]), it is an ordinary unary request: the message is in the request body and there are no
+query parameters, so `connect_get_info` is not set. Report the method in the `http_method` field of the
+`ConformancePayload`'s request info instead. A server must accept `QUERY` for this endpoint, and must answer a `QUERY`
+request to any other unary endpoint, and to any streaming endpoint, with a `405 Method Not Allowed` response whose
+`Allow` header does not list `QUERY`.
 
 For the full documentation on implementing the `IdempotentUnary` endpoint, click [here][idempotentunary].
 
@@ -450,3 +461,4 @@ For examples, check out the following:
 [clientstream]: https://buf.build/connectrpc/conformance/docs/main:connectrpc.conformance.v1#connectrpc.conformance.v1.ConformanceService.ClientStream
 [serverstream]: https://buf.build/connectrpc/conformance/docs/main:connectrpc.conformance.v1#connectrpc.conformance.v1.ConformanceService.ServerStream
 [bidistream]: https://buf.build/connectrpc/conformance/docs/main:connectrpc.conformance.v1#connectrpc.conformance.v1.ConformanceService.BidiStream
+[config-docs]: ./configuring_and_running_tests.md

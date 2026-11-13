@@ -109,6 +109,11 @@ export class Features extends jspb.Message {
   hasSupportsMessageReceiveLimit(): boolean;
   clearSupportsMessageReceiveLimit(): Features;
 
+  getSupportsConnectQuery(): boolean;
+  setSupportsConnectQuery(value: boolean): Features;
+  hasSupportsConnectQuery(): boolean;
+  clearSupportsConnectQuery(): Features;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Features.AsObject;
   static toObject(includeInstance: boolean, msg: Features): Features.AsObject;
@@ -131,6 +136,7 @@ export namespace Features {
     supportsHalfDuplexBidiOverHttp1?: boolean,
     supportsConnectGet?: boolean,
     supportsMessageReceiveLimit?: boolean,
+    supportsConnectQuery?: boolean,
   }
 
   export enum SupportsH2cCase { 
@@ -166,6 +172,11 @@ export namespace Features {
   export enum SupportsMessageReceiveLimitCase { 
     _SUPPORTS_MESSAGE_RECEIVE_LIMIT_NOT_SET = 0,
     SUPPORTS_MESSAGE_RECEIVE_LIMIT = 12,
+  }
+
+  export enum SupportsConnectQueryCase { 
+    _SUPPORTS_CONNECT_QUERY_NOT_SET = 0,
+    SUPPORTS_CONNECT_QUERY = 13,
   }
 }
 

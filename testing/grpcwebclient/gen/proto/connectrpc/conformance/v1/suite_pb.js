@@ -152,7 +152,8 @@ connectVersionMode: jspb.Message.getFieldWithDefault(msg, 8, 0),
 reliesOnTls: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
 reliesOnTlsClientCerts: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
 reliesOnConnectGet: jspb.Message.getBooleanFieldWithDefault(msg, 11, false),
-reliesOnMessageReceiveLimit: jspb.Message.getBooleanFieldWithDefault(msg, 12, false)
+reliesOnMessageReceiveLimit: jspb.Message.getBooleanFieldWithDefault(msg, 12, false),
+reliesOnConnectQuery: jspb.Message.getBooleanFieldWithDefault(msg, 13, false)
   };
 
   if (includeInstance) {
@@ -233,6 +234,10 @@ proto.connectrpc.conformance.v1.TestSuite.deserializeBinaryFromReader = function
     case 12:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setReliesOnMessageReceiveLimit(value);
+      break;
+    case 13:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setReliesOnConnectQuery(value);
       break;
     default:
       reader.skipField();
@@ -345,6 +350,13 @@ proto.connectrpc.conformance.v1.TestSuite.serializeBinaryToWriter = function(mes
   if (f) {
     writer.writeBool(
       12,
+      f
+    );
+  }
+  f = message.getReliesOnConnectQuery();
+  if (f) {
+    writer.writeBool(
+      13,
       f
     );
   }
@@ -678,6 +690,24 @@ proto.connectrpc.conformance.v1.TestSuite.prototype.getReliesOnMessageReceiveLim
  */
 proto.connectrpc.conformance.v1.TestSuite.prototype.setReliesOnMessageReceiveLimit = function(value) {
   return jspb.Message.setProto3BooleanField(this, 12, value);
+};
+
+
+/**
+ * optional bool relies_on_connect_query = 13;
+ * @return {boolean}
+ */
+proto.connectrpc.conformance.v1.TestSuite.prototype.getReliesOnConnectQuery = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 13, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.connectrpc.conformance.v1.TestSuite} returns this
+ */
+proto.connectrpc.conformance.v1.TestSuite.prototype.setReliesOnConnectQuery = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 13, value);
 };
 
 

@@ -122,6 +122,16 @@ feature of the implementation under test.
   assumed that the implementation _does_ support the GET method with the Connect protocol.
   This does not need to be configured if the implementation only supports the gRPC and/or
   gRPC-Web protocols.
+* `supports_connect_query`: This flag indicates whether the implementation supports the use
+  of the "QUERY" HTTP method (RFC 10008) with the Connect protocol. A QUERY request is a
+  unary POST request with only the method changed: the message is the request content, and
+  none of the GET query parameters are used. It is allowed for the same methods as GET (those
+  that are side-effect-free). Clients send it only when told to, and servers accept it by
+  default. **Unlike `supports_connect_get`, if not configured it is assumed that the
+  implementation does _not_ support the QUERY method with the Connect protocol.** This default
+  is deliberate: implementations that have not adopted QUERY keep passing when they upgrade
+  the test suite. Set it to `true` to opt in. This does not need to be configured if the
+  implementation only supports the gRPC and/or gRPC-Web protocols.
 * `supports_message_receive_limit`: This flag indicates whether the implementation
   supports configuration to limit the size of messages that it receives. Such configuration
   is intended to aid operations, to prevent excessive memory usage and resource consumption
