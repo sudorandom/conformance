@@ -122,8 +122,13 @@ testCases:
             value: [ "1" ]
         unary:
           binary_message: { "@type": "type.googleapis.com/connectrpc.conformance.v1.IdempotentUnaryRequest" }
+    # RFC 10008 requires a 4xx for a missing Content-Type, such as 400. Connect
+    # servers answer 415, as they do for POST, but servers behind an HTTP layer
+    # that rejects the request first may answer 400. A 2xx response fails.
+    otherAllowedErrorCodes:
+      # internal, mapped from 400 status code
+      - CODE_INTERNAL
     expectedResponse:
-      httpStatusCode: 415
       error:
         # unknown, mapped from 415 status code
         code: CODE_UNKNOWN

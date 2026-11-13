@@ -185,6 +185,8 @@ query parameters, so `connect_get_info` is not set. Report the method in the `ht
 `ConformancePayload`'s request info instead. A server must accept `QUERY` for this endpoint, and must answer a `QUERY`
 request to any other unary endpoint, and to any streaming endpoint, with a `405 Method Not Allowed` response whose
 `Allow` header does not list `QUERY`.
+A `QUERY` request with an unsupported `Content-Type` must get `415`. With no `Content-Type` at all, RFC 10008 requires a
+4xx response; servers may answer `400` or `415`, and any success response fails the test.
 
 For the full documentation on implementing the `IdempotentUnary` endpoint, click [here][idempotentunary].
 

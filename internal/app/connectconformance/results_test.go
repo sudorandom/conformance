@@ -207,6 +207,36 @@ func TestResults_Assert_HTTPMethod(t *testing.T) {
 	require.Contains(t, lines[2], `server reported HTTP method "POST" but "QUERY" was expected`)
 }
 
+func TestResults_Assert_QueryMissingContentType(t *testing.T) {
+	t.Parallel()
+	// Mirrors the missing-content-type case in connect_server_query.yaml: 415
+	// maps to unknown and 400 maps to internal.
+	testCase := &conformancev1.TestCase{
+		Request:                &conformancev1.ClientCompatRequest{TestName: "abc"},
+		OtherAllowedErrorCodes: []conformancev1.Code{conformancev1.Code_CODE_INTERNAL},
+		ExpectedResponse: &conformancev1.ClientResponseResult{
+			Error: &conformancev1.Error{Code: conformancev1.Code_CODE_UNKNOWN},
+		},
+	}
+	errorResult := func(code conformancev1.Code) *conformancev1.ClientResponseResult {
+		return &conformancev1.ClientResponseResult{Error: &conformancev1.Error{Code: code}}
+	}
+	results := newResults(conformancev1.TestSuite_TEST_MODE_UNSPECIFIED, 0, makeKnownFailing(), makeKnownFlaky(), nil)
+	results.assert("status-415", testCase, errorResult(conformancev1.Code_CODE_UNKNOWN))
+	results.assert("status-400", testCase, errorResult(conformancev1.Code_CODE_INTERNAL))
+	results.assert("status-200", testCase, &conformancev1.ClientResponseResult{
+		Payloads: []*conformancev1.ConformancePayload{{Data: []byte{1}}},
+	})
+	results.assert("other-error", testCase, errorResult(conformancev1.Code_CODE_NOT_FOUND))
+
+	logger := &internal.SimplePrinter{}
+	require.False(t, results.report(logger))
+	lines := errorMessages(logger.Messages)
+	require.Len(t, lines, 2)
+	require.Contains(t, lines[0], "FAILED: other-error:")
+	require.Contains(t, lines[1], "FAILED: status-200:")
+}
+
 func TestResults_Assert_ReportsAllErrors(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
